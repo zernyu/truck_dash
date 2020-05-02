@@ -1,6 +1,7 @@
 load('api_adc.js');
 load('api_config.js');
 load('api_timer.js');
+load('api_arduino_ssd1306.js');
 load('api_sys.js');
 
 let THERMISTOR_GPIO = 36;
@@ -12,6 +13,15 @@ let tempIndex = 0;
 let format = ffi("int sprintf(char *, char *, double)");
 
 let voltage = ffi('int mgos_adc_read_voltage(int)');
+
+// Enable ADC on thermistor pin
+ADC.enable(THERMISTOR_GPIO);
+
+// Start sampling temperature
+Timer.set(100, true, function () {
+  tempSamples[tempIndex] = voltage(THERMISTOR_GPIO);
+  tempIndex = (tempIndex + 1) % NUM_TEMP_SAMPLES;
+}, null);
 
 let getAverageVoltage = function () {
   let index;
@@ -32,7 +42,7 @@ let getThermistorTemperature = function () {
     let Vout = getAverageVoltage(); // Readings come in millivolts
 
     // Calculate using the Steinhart-Hart equation
-    let Vs = 3134;    // Supply (thermistor unplugged) mV
+    let Vs = 3280;    // Supply (thermistor unplugged) mV
     let B = 3950.0;   // Thermistor Beta coefficient
     let Ro = 10000.0; // Thermistor resistance at 25.0C
     let R1 = 10000.0; // Fixed resistor
@@ -47,15 +57,38 @@ let getThermistorTemperature = function () {
     return Tc;
 };
 
-ADC.enable(THERMISTOR_GPIO);
+/////// Drawing stuff ////////
 
+let iceFlashTimer = 0;
+
+let drawText = function (str, size, x, y) {
+  d.setTextSize(size);
+  d.setTextColor(Adafruit_SSD1306.WHITE);
+  d.setCursor(x, y);
+  d.write(str);
+};
+
+// Initialize Adafruit_SSD1306 library (I2C)
+let d = Adafruit_SSD1306.create_i2c(16 /* RST GPIO */, Adafruit_SSD1306.RES_128_64);
+// Initialize the display.
+d.begin(Adafruit_SSD1306.SWITCHCAPVCC, 0x3C, true /* reset */);
+
+// Display the temperature
 Timer.set(500, true, function () {
+  let temp = getThermistorTemperature();
   let buf = '0000.0';
-  let len = format(buf, '%.1f', getThermistorTemperature());
-  print('Temperature:', buf.slice(0, len));
-}, null);
+  let len = format(buf, '%.1f', temp);
+  let tempString = buf.slice(0, len) + "F"; 
+  print('Temperature:', tempString);
 
-Timer.set(100, true, function () {
-  tempSamples[tempIndex] = voltage(THERMISTOR_GPIO);
-  tempIndex = (tempIndex + 1) % NUM_TEMP_SAMPLES;
+  d.clearDisplay();
+  if (temp <= 34 && temp >= 28) {
+    if (iceFlashTimer < 2) {
+      drawText("*", 3, 0, 0); 
+    }
+    iceFlashTimer = (iceFlashTimer + 1) % 3;
+  }
+  drawText(buf.slice(0, len) + "F", 3, d.width() / 4, 0);
+  //drawText("=====================", 1, 0, d.height() / 2);
+  d.display();
 }, null);
