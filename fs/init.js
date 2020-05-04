@@ -5,7 +5,7 @@ load('api_arduino_ssd1306.js');
 load('api_sys.js');
 
 let THERMISTOR_GPIO = 36;
-let NUM_TEMP_SAMPLES = 20;
+let NUM_TEMP_SAMPLES = 10;
 
 let tempSamples = [];
 let tempIndex = 0;
@@ -74,21 +74,20 @@ let d = Adafruit_SSD1306.create_i2c(16 /* RST GPIO */, Adafruit_SSD1306.RES_128_
 d.begin(Adafruit_SSD1306.SWITCHCAPVCC, 0x3C, true /* reset */);
 
 // Display the temperature
-Timer.set(500, true, function () {
+Timer.set(1000, true, function () {
   let temp = getThermistorTemperature();
   let buf = '0000.0';
-  let len = format(buf, '%.1f', temp);
+  let len = format(buf, '%.0f', temp);
   let tempString = buf.slice(0, len) + "F"; 
   print('Temperature:', tempString);
 
   d.clearDisplay();
   if (temp <= 34 && temp >= 28) {
-    if (iceFlashTimer < 2) {
-      drawText("*", 3, 0, 0); 
+    if (iceFlashTimer === 0) {
+      drawText("*", 5, 0, d.height() / 4); 
     }
-    iceFlashTimer = (iceFlashTimer + 1) % 3;
+    iceFlashTimer = (iceFlashTimer + 1) % 2;
   }
-  drawText(buf.slice(0, len) + "F", 3, d.width() / 4, 0);
-  //drawText("=====================", 1, 0, d.height() / 2);
+  drawText(tempString, 5, d.width() / 4, d.height() / 4);
   d.display();
 }, null);
