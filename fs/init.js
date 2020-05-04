@@ -84,17 +84,10 @@ Timer.set(1000, true, function () {
   d.clearDisplay();
   if (temp <= 34 && temp >= 28) {
     if (iceFlashTimer === 0) {
-      drawText("*", 3, d.width() * 5 / 7, d.height()); 
+      drawText("*", 5, 0, d.height() / 4); 
     }
     iceFlashTimer = (iceFlashTimer + 1) % 2;
   }
-
-  // Reverse text because of backwards font
-  let backString = '';
-  let i;
-  for (i = 0; i < tempString.length; i++) {
-    backString = backString + tempString[tempString.length - 1 - i];
-  }
-  drawText(backString, 2, 0, d.height() * 3 / 4);
+  drawText(tempString, 5, d.width() / 4, d.height() / 4);
   d.display();
 }, null);
