@@ -34,6 +34,7 @@ let getAverageVoltage = function () {
   return cumulative / index;
 };
 
+// TODO length of wire extension has 1.5ohms of resistance
 let getThermistorTemperature = function () {
     // They say readings are noisy and should be sampled, but it looks like we
     // are getting variances of about +/-0.15 Celsius per reading, which is

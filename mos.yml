@@ -1,6 +1,7 @@
 author: zebra
 description: Truck dashboard info
 version: 1.0
+platform: esp32
 manifest_version: 2017-05-18
 libs_version: ${mos.version}
 modules_version: ${mos.version}
